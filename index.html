@@ -1,8 +1,12 @@
 <title>LA FRIES A.I.</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
 <meta name="theme-color" content="#D5361F">
+<!-- iOS home-screen install: Safari ignores the web manifest for this, needs its own meta tags -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="LA FRIES A.I.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Libre+Franklin:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -219,6 +223,11 @@
   .msg.ai .bubble{
     background:var(--cream);
     border:1px solid var(--line);
+  }
+  .msg.ai .bubble.oov{
+    border:1px dashed var(--red);
+    color:var(--ink-dim);
+    font-style:italic;
   }
   .msg .tag{
     font-family:'Space Mono',monospace;
@@ -512,6 +521,20 @@
 
   async function ask(promptText){
     addMessage('user', promptText);
+
+    const routed = routePrompt(promptText, model.knownWords || new Set());
+    if (routed.action !== 'generate'){
+      const bubble = addMessage('ai', routed.text);
+      if (routed.action === 'oov') bubble.classList.add('oov');
+      history += `### Prompt: ${promptText}\n### Response: ${routed.text}\n`;
+      if (history.length > MAX_HISTORY_CHARS) history = history.slice(-MAX_HISTORY_CHARS);
+      messages.push({role: 'user', text: promptText});
+      messages.push({role: 'ai', text: routed.text});
+      if (messages.length > MAX_SAVED_MESSAGES) messages = messages.slice(-MAX_SAVED_MESSAGES);
+      saveMessages(messages);
+      return;
+    }
+
     const bubble = addMessage('ai', '');
     statusEl.textContent = 'writing...';
     statusEl.classList.add('busy');
@@ -598,5 +621,17 @@
     });
     row.appendChild(btn);
   });
+
+  // iOS Safari never fires beforeinstallprompt -- it has no automatic
+  // install button at all, only the manual Share-sheet flow.
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (isIOS && !isStandalone){
+    const row = document.getElementById('installRow');
+    const hint = document.createElement('div');
+    hint.style.fontSize = '0.72rem';
+    hint.textContent = 'On iPhone/iPad: tap Share, then "Add to Home Screen" to install.';
+    row.appendChild(hint);
+  }
 })();
 </script>

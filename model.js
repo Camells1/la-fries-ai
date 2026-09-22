@@ -40,7 +40,68 @@ async function loadLaFriesModel(manifestUrl) {
     params[name] = { data: flatFloats.subarray(start, start + count), shape: info.shape };
   }
 
-  return new LaFries(manifest.V, manifest.E, manifest.H, params, manifest.stoi, manifest.itos);
+  const model = new LaFries(manifest.V, manifest.E, manifest.H, params, manifest.stoi, manifest.itos);
+  model.knownWords = new Set(manifest.known_words || []);
+  return model;
+}
+
+// ---------------------------------------------------------------------
+// Rule-based router (mirrors model/router.py): reliable greeting replies
+// pulled from real training data, and an honest out-of-vocabulary check
+// instead of letting the model hallucinate about topics it never saw.
+// ---------------------------------------------------------------------
+const GREETINGS = new Set([
+  "hi", "hello", "hey", "hiya", "yo", "sup", "howdy", "greetings",
+  "good morning", "good afternoon", "good evening",
+]);
+const GREETING_RESPONSES = [
+  "Hello! It's nice to talk with you.",
+  "Hi there! Good to hear from you.",
+  "Hey! What would you like me to write?",
+];
+const ROUTER_STOPWORDS = new Set([
+  "a", "an", "the", "is", "are", "was", "were", "be", "been", "being",
+  "do", "does", "did", "have", "has", "had", "can", "could", "would",
+  "should", "will", "shall", "may", "might", "must",
+  "i", "you", "your", "yours", "me", "my", "mine", "we", "us", "our",
+  "he", "she", "it", "its", "they", "them", "their", "this", "that",
+  "what", "who", "whom", "which", "when", "where", "why", "how",
+  "and", "or", "but", "if", "so", "as", "of", "to", "in", "on", "at",
+  "for", "with", "about", "into", "involving", "from", "by",
+  "write", "writing", "written", "tell", "told", "say", "said",
+  "short", "story", "stories", "essay", "essays", "please", "like",
+  "know", "want", "give", "make", "made", "think", "one", "some",
+]);
+
+function routerNormalize(text) {
+  return (text.toLowerCase().match(/[a-z']+/g) || []).join(" ");
+}
+
+function contentWordsIn(text, minLen = 3) {
+  const words = text.toLowerCase().match(/[a-z']+/g) || [];
+  return words.filter((w) => w.length >= minLen && !ROUTER_STOPWORDS.has(w));
+}
+
+// Returns {action: 'greeting'|'oov'|'generate', text: string|null}
+function routePrompt(prompt, knownWords) {
+  if (GREETINGS.has(routerNormalize(prompt))) {
+    const text = GREETING_RESPONSES[Math.floor(Math.random() * GREETING_RESPONSES.length)];
+    return { action: "greeting", text };
+  }
+
+  const words = contentWordsIn(prompt);
+  if (words.length > 0) {
+    const unknown = [...new Set(words.filter((w) => !knownWords.has(w)))];
+    if (unknown.length === words.length) {
+      const list = unknown.slice(0, 6).map((w) => `"${w}"`).join(", ");
+      return {
+        action: "oov",
+        text: `I don't have any training data related to ${list}. I can't answer this reliably -- I'd just be making things up.`,
+      };
+    }
+  }
+
+  return { action: "generate", text: null };
 }
 
 class LaFries {

@@ -1,11 +1,12 @@
 // LA FRIES A.I. - service worker for offline / installable use on Chrome OS.
 // Bump CACHE_NAME on any real content change so old caches get cleared.
-const CACHE_NAME = "la-fries-ai-v3";
+const CACHE_NAME = "la-fries-ai-v4";
 const CORE_ASSETS = [
   "./",
   "./index.html",
   "./model.js",
   "./manifest.json",
+  "./icon-180.png",
   "./icon-192.png",
   "./icon-512.png",
   "./icon-512-maskable.png",
