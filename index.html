@@ -1,0 +1,516 @@
+<title>LA FRIES A.I.</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="theme-color" content="#D5361F">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Libre+Franklin:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cream:#FBF2DE;
+    --paper:#FFFDF7;
+    --ink:#241611;
+    --ink-dim:#6B5B4C;
+    --red:#D5361F;
+    --red-deep:#8C1F12;
+    --yellow:#F5B300;
+    --line:#E7D5AE;
+    --shadow: rgba(36,22,17,0.14);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --cream:#181210;
+      --paper:#221A15;
+      --ink:#F3E7D2;
+      --ink-dim:#C7B49B;
+      --red:#FF5B3D;
+      --red-deep:#FF8161;
+      --yellow:#FFD23F;
+      --line:#3D2F23;
+      --shadow: rgba(0,0,0,0.45);
+    }
+  }
+  :root[data-theme="dark"]{
+    --cream:#181210;
+    --paper:#221A15;
+    --ink:#F3E7D2;
+    --ink-dim:#C7B49B;
+    --red:#FF5B3D;
+    --red-deep:#FF8161;
+    --yellow:#FFD23F;
+    --line:#3D2F23;
+    --shadow: rgba(0,0,0,0.45);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    background:var(--cream);
+    color:var(--ink);
+    font-family:'Libre Franklin',system-ui,sans-serif;
+    margin:0;
+    padding-inline:16px;
+    padding-block:32px 64px;
+    display:flex;
+    justify-content:center;
+  }
+  main{width:100%;max-width:700px;}
+
+  .signage{
+    background:var(--red);
+    color:var(--yellow);
+    border-radius:14px;
+    padding:28px 24px 22px;
+    text-align:center;
+    box-shadow:0 10px 0 var(--red-deep), 0 18px 30px var(--shadow);
+    position:relative;
+    overflow:hidden;
+  }
+  .signage::before{
+    content:"";
+    position:absolute; inset:8px;
+    border:2px dashed rgba(245,179,0,0.55);
+    border-radius:8px;
+    pointer-events:none;
+  }
+  .signage h1{
+    font-family:'Alfa Slab One',serif;
+    font-size:clamp(2.1rem,7vw,3.2rem);
+    letter-spacing:0.02em;
+    margin:0;
+    text-shadow:3px 3px 0 var(--red-deep);
+    text-wrap:balance;
+  }
+  .signage .sub{
+    font-family:'Space Mono',monospace;
+    font-size:0.8rem;
+    color:var(--cream);
+    margin-top:8px;
+    letter-spacing:0.04em;
+  }
+
+  .spec-strip{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:1px;
+    background:var(--line);
+    border:1px solid var(--line);
+    border-radius:10px;
+    overflow:hidden;
+    margin-top:18px;
+  }
+  .spec-strip div{
+    background:var(--paper);
+    padding:12px 10px;
+    text-align:center;
+  }
+  .spec-strip .num{
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:1.05rem;
+    font-variant-numeric:tabular-nums;
+  }
+  .spec-strip .label{
+    font-size:0.68rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-dim);
+    margin-top:2px;
+  }
+
+  .fine-print{
+    margin-top:16px;
+    border:1px dashed var(--line);
+    border-radius:10px;
+    padding:12px 16px;
+    font-size:0.82rem;
+    color:var(--ink-dim);
+    line-height:1.5;
+    background:var(--paper);
+  }
+  .fine-print b{color:var(--ink);}
+
+  .board{
+    margin-top:26px;
+    background:var(--paper);
+    border-radius:14px;
+    border:1px solid var(--line);
+    box-shadow:0 3px 0 var(--line);
+  }
+  .board-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+  }
+  .board-head h2{
+    font-family:'Alfa Slab One',serif;
+    font-size:1rem;
+    margin:0;
+    color:var(--red);
+  }
+  .status{
+    font-family:'Space Mono',monospace;
+    font-size:0.72rem;
+    color:var(--ink-dim);
+  }
+  .status.busy{color:var(--red);}
+
+  #log{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    padding:18px;
+    min-height:120px;
+  }
+  .msg{max-width:88%;}
+  .msg.user{align-self:flex-end;text-align:right;}
+  .msg .bubble{
+    display:inline-block;
+    text-align:left;
+    padding:10px 14px;
+    border-radius:10px;
+    line-height:1.5;
+    font-size:0.94rem;
+    white-space:pre-wrap;
+  }
+  .msg.user .bubble{
+    background:var(--yellow);
+    color:var(--red-deep);
+    font-weight:600;
+  }
+  .msg.ai .bubble{
+    background:var(--cream);
+    border:1px solid var(--line);
+  }
+  .msg .tag{
+    font-family:'Space Mono',monospace;
+    font-size:0.65rem;
+    text-transform:uppercase;
+    letter-spacing:0.06em;
+    color:var(--ink-dim);
+    display:block;
+    margin-bottom:4px;
+  }
+  .msg.user .tag{text-align:right;}
+
+  .order-pad{
+    border-top:1px solid var(--line);
+    padding:14px 18px 18px;
+  }
+  .spice-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+    font-family:'Space Mono',monospace;
+    font-size:0.72rem;
+    color:var(--ink-dim);
+  }
+  .spice-row input[type=range]{
+    flex:1;
+    accent-color:var(--red);
+  }
+  .spice-val{min-width:3.2em;text-align:right;color:var(--ink);}
+
+  form{display:flex;gap:8px;}
+  input[type=text]{
+    flex:1;
+    border:1px solid var(--line);
+    background:var(--cream);
+    color:var(--ink);
+    border-radius:8px;
+    padding:12px 14px;
+    font-size:0.95rem;
+    font-family:inherit;
+  }
+  input[type=text]:focus{outline:2px solid var(--red);outline-offset:1px;}
+  button{
+    font-family:'Alfa Slab One',serif;
+    font-size:0.95rem;
+    background:var(--red);
+    color:var(--yellow);
+    border:none;
+    border-radius:8px;
+    padding:0 20px;
+    cursor:pointer;
+    box-shadow:0 3px 0 var(--red-deep);
+  }
+  button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--red-deep);}
+  button:disabled{opacity:0.5;cursor:default;}
+
+  .quick-row{
+    display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;
+  }
+  .quick-row button.chip{
+    font-family:'Libre Franklin',sans-serif;
+    font-size:0.78rem;
+    font-weight:600;
+    background:var(--cream);
+    color:var(--ink);
+    border:1px solid var(--line);
+    box-shadow:none;
+    padding:6px 12px;
+    border-radius:999px;
+  }
+
+  footer{
+    text-align:center;
+    margin-top:20px;
+    font-size:0.75rem;
+    color:var(--ink-dim);
+  }
+  footer a{color:var(--red);}
+</style>
+
+<main>
+  <div class="signage">
+    <h1>LA FRIES A.I.</h1>
+    <div class="sub">small batch &middot; hand-built &middot; self-trained</div>
+    <div class="spec-strip">
+      <div><div class="num" id="specParams">&mdash;</div><div class="label">Parameters</div></div>
+      <div><div class="num">GRU</div><div class="label">Architecture</div></div>
+      <div><div class="num">JS</div><div class="label">Runs in-browser</div></div>
+    </div>
+  </div>
+
+  <div class="fine-print">
+    <b>What this actually is:</b> a from-scratch, hand-written character-level
+    language model, small enough to run entirely on your device &mdash; no server,
+    no account, no API cost. It learned its style and its own name from a small
+    original corpus, so it can write a short essay or story and knows who it is.
+    It does <b>not</b> know current events or facts about the world, and it
+    cannot browse the web &mdash; at this size that would just mean confidently
+    making things up.
+  </div>
+
+  <div class="board">
+    <div class="board-head">
+      <h2>order counter</h2>
+      <span class="status" id="status">loading model&hellip;</span>
+    </div>
+    <div id="log"></div>
+    <div class="order-pad">
+      <div class="spice-row">
+        <span>mild</span>
+        <input type="range" id="temp" min="0.3" max="1.2" step="0.05" value="0.7">
+        <span>wild</span>
+        <span class="spice-val" id="tempVal">0.70</span>
+      </div>
+      <form id="form">
+        <input type="text" id="input" placeholder="Write a short story about&hellip;" autocomplete="off" disabled>
+        <button type="submit" id="send" disabled>Order</button>
+      </form>
+      <div class="quick-row">
+        <button type="button" class="chip" data-q="What is your name?">what is your name</button>
+        <button type="button" class="chip" data-q="Write a short story about the ocean.">a story about the ocean</button>
+        <button type="button" class="chip" data-q="Write a short essay about patience.">an essay about patience</button>
+        <button type="button" class="chip" id="resetChip">clear conversation</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    every reply is generated live in your browser, one character at a time &mdash;
+    nothing is sent to a server, no tracking, no accounts. conversation is
+    saved locally in this browser only (not synced across devices).
+    <div id="installRow" style="margin-top:10px;"></div>
+  </footer>
+</main>
+
+<script src="model.js"></script>
+<script>
+(async function(){
+  const statusEl = document.getElementById('status');
+  const logEl = document.getElementById('log');
+  const form = document.getElementById('form');
+  const input = document.getElementById('input');
+  const sendBtn = document.getElementById('send');
+  const tempSlider = document.getElementById('temp');
+  const tempVal = document.getElementById('tempVal');
+  const specParams = document.getElementById('specParams');
+
+  tempSlider.addEventListener('input', () => {
+    tempVal.textContent = parseFloat(tempSlider.value).toFixed(2);
+  });
+
+  const STORAGE_KEY = 'la-fries-ai:conversation';
+
+  function addMessage(role, text){
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ' + role;
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = role === 'user' ? 'you' : 'LA FRIES A.I.';
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+    wrap.appendChild(tag);
+    wrap.appendChild(bubble);
+    logEl.appendChild(wrap);
+    logEl.scrollTop = logEl.scrollHeight;
+    return bubble;
+  }
+
+  // Saved conversation lives only in this browser (localStorage) -- it
+  // never leaves the device, isn't synced anywhere, and won't survive a
+  // cleared cache or a different browser/device.
+  function loadSavedMessages(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : null;
+    }catch(e){ return null; }
+  }
+  function saveMessages(messages){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(messages)); }catch(e){}
+  }
+  function clearSavedMessages(){
+    try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  }
+
+  let model = null;
+  let history = '';
+  let messages = [];  // [{role:'user'|'ai', text}], mirrors what's saved/rendered
+  const MAX_HISTORY_CHARS = 1500;
+  const MAX_SAVED_MESSAGES = 40;
+
+  function rebuildHistoryFromMessages(){
+    history = '';
+    for (let i = 0; i < messages.length - 1; i += 2){
+      const u = messages[i], a = messages[i+1];
+      if (u && a && u.role === 'user' && a.role === 'ai'){
+        history += `### Prompt: ${u.text}\n### Response: ${a.text}\n`;
+      }
+    }
+    if (history.length > MAX_HISTORY_CHARS) history = history.slice(-MAX_HISTORY_CHARS);
+  }
+
+  const saved = loadSavedMessages();
+  let exampleBubble = null;
+  if (saved && saved.length){
+    messages = saved;
+    for (const m of messages) addMessage(m.role, m.text);
+    rebuildHistoryFromMessages();
+    statusEl.textContent = 'loading model...';
+  } else {
+    // Example exchange shown up front so the page demonstrates itself.
+    addMessage('user', 'what is your name');
+    exampleBubble = addMessage('ai', '(example reply -- generated fresh below once loaded)');
+  }
+
+  async function loadModel(){
+    try{
+      const res = await fetch('model_data.json');
+      const data = await res.json();
+      model = new LaFries(data);
+      specParams.textContent = (data.V*data.E + 3*(data.E*data.H + data.H*data.H + data.H) + data.H*data.V + data.V).toLocaleString();
+      statusEl.textContent = 'ready';
+      input.disabled = false;
+      sendBtn.disabled = false;
+
+      if (exampleBubble){
+        const gen = model.generate('What is your name?', {maxChars:120, temperature:0.4});
+        let acc = '';
+        for (const step of gen){
+          acc = step.text;
+          exampleBubble.textContent = acc;
+          if (step.done) break;
+        }
+      }
+    }catch(err){
+      statusEl.textContent = 'failed to load model';
+      console.error(err);
+    }
+  }
+
+  async function ask(promptText){
+    addMessage('user', promptText);
+    const bubble = addMessage('ai', '');
+    statusEl.textContent = 'writing...';
+    statusEl.classList.add('busy');
+    input.disabled = true; sendBtn.disabled = true;
+
+    const temperature = parseFloat(tempSlider.value);
+    const gen = model.generate(promptText, {maxChars:600, temperature, history});
+    let lastText = '';
+
+    function tick(){
+      const {value, done} = gen.next();
+      if (value){
+        lastText = value.text || lastText;
+        bubble.textContent = lastText || '(...)';
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+      if (!done){
+        setTimeout(tick, 12);
+      }else{
+        const reply = lastText.trim();
+        history += `### Prompt: ${promptText}\n### Response: ${reply}\n`;
+        if (history.length > MAX_HISTORY_CHARS) history = history.slice(-MAX_HISTORY_CHARS);
+
+        messages.push({role: 'user', text: promptText});
+        messages.push({role: 'ai', text: reply});
+        if (messages.length > MAX_SAVED_MESSAGES) messages = messages.slice(-MAX_SAVED_MESSAGES);
+        saveMessages(messages);
+
+        statusEl.textContent = 'ready';
+        statusEl.classList.remove('busy');
+        input.disabled = false; sendBtn.disabled = false;
+        input.focus();
+      }
+    }
+    tick();
+  }
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text || !model) return;
+    input.value = '';
+    ask(text);
+  });
+
+  document.querySelectorAll('.chip[data-q]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!model) return;
+      ask(btn.dataset.q);
+    });
+  });
+
+  document.getElementById('resetChip').addEventListener('click', () => {
+    history = '';
+    messages = [];
+    clearSavedMessages();
+    logEl.innerHTML = '';
+    addMessage('ai', '(conversation cleared -- ask me anything)');
+  });
+
+  loadModel();
+
+  // Offline / installable support (Chrome OS "Install app").
+  if ("serviceWorker" in navigator) {
+    try { navigator.serviceWorker.register("sw.js"); } catch (e) { console.warn(e); }
+  }
+  let deferredInstallPrompt = null;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    const row = document.getElementById("installRow");
+    const btn = document.createElement("button");
+    btn.className = "chip";
+    btn.textContent = "install app";
+    btn.style.cursor = "pointer";
+    btn.addEventListener("click", async () => {
+      if (!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      btn.remove();
+    });
+    row.appendChild(btn);
+  });
+})();
+</script>

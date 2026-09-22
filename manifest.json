@@ -1,0 +1,15 @@
+{
+  "name": "LA FRIES A.I.",
+  "short_name": "LA FRIES A.I.",
+  "description": "A hand-built, self-trained language model that runs entirely in your browser.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FBF2DE",
+  "theme_color": "#D5361F",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
