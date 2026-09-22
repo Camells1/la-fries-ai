@@ -1,6 +1,6 @@
 // LA FRIES A.I. - service worker for offline / installable use on Chrome OS.
 // Bump CACHE_NAME on any real content change so old caches get cleared.
-const CACHE_NAME = "la-fries-ai-v2";
+const CACHE_NAME = "la-fries-ai-v3";
 const CORE_ASSETS = [
   "./",
   "./index.html",
@@ -10,6 +10,16 @@ const CORE_ASSETS = [
   "./icon-512.png",
   "./icon-512-maskable.png",
 ];
+
+// Only the big model-weight shards are worth being cache-first about (large,
+// rarely change, genuinely benefit from not re-downloading). Everything else
+// -- especially model.js and index.html -- must be network-first, or a
+// returning visitor can get stuck on stale code indefinitely after an
+// update (this bit us during testing: a cached model.js referenced a
+// function that no longer matched a redeployed page).
+function isModelShard(url) {
+  return /model_data_.*\.(txt|json)$/.test(url) || /\.bin$/.test(url);
+}
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -31,21 +41,8 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
 
-  // network-first for the page itself, so republishes reach open viewers;
-  // cache-first for the heavy/static assets (model weights, icons, script).
-  const isPage = req.mode === "navigate" || req.url.endsWith("/index.html") || req.url.endsWith("/");
-
-  if (isPage) {
-    event.respondWith(
-      fetch(req)
-        .then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-          return res;
-        })
-        .catch(() => caches.match(req).then((res) => res || caches.match("./index.html")))
-    );
-  } else {
+  if (isModelShard(req.url)) {
+    // cache-first: large, rarely change, worth not re-downloading
     event.respondWith(
       caches.match(req).then(
         (cached) =>
@@ -56,6 +53,19 @@ self.addEventListener("fetch", (event) => {
             return res;
           })
       )
+    );
+  } else {
+    // network-first for everything else (page, model.js, manifest, icons)
+    // so a redeploy reaches returning visitors instead of getting stuck
+    // behind a stale cached script indefinitely.
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
+          return res;
+        })
+        .catch(() => caches.match(req).then((res) => res || caches.match("./index.html")))
     );
   }
 });
