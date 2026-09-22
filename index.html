@@ -362,8 +362,8 @@
   // Each entry here becomes a tab. `file: null` means "not deployed yet" --
   // shows as a disabled tab with the note, rather than pretending it exists.
   const MODELS = [
-    { id: '250k', label: '250K', note: 'balanced', file: 'model_data.json' },
-    { id: '10m', label: '10M', note: 'training...', file: null },
+    { id: '250k', label: '250K', note: 'balanced', file: 'model_data_250k.json' },
+    { id: '10m', label: '10M', note: 'richer style', file: 'model_data_10m.json' },
   ];
 
   const statusEl = document.getElementById('status');
@@ -483,10 +483,8 @@
     input.disabled = true;
     sendBtn.disabled = true;
     try{
-      const res = await fetch(cfg.file);
-      const data = await res.json();
-      const built = new LaFries(data);
-      built.param_count_display = (data.V*data.E + 3*(data.E*data.H + data.H*data.H + data.H) + data.H*data.V + data.V).toLocaleString();
+      const built = await loadLaFriesModel(cfg.file);
+      built.param_count_display = built.param_count().toLocaleString();
       modelCache[id] = built;
       if (currentModelId !== id) return;  // switched away while this was loading
       model = built;
