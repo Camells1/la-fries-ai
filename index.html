@@ -156,6 +156,42 @@
     color:var(--ink-dim);
   }
   .status.busy{color:var(--red);}
+  .status.error{color:var(--red);font-weight:700;}
+
+  .model-tabs{
+    display:flex;
+    gap:2px;
+    padding:0 18px;
+    border-bottom:1px solid var(--line);
+    overflow-x:auto;
+  }
+  .model-tab{
+    font-family:'Space Mono',monospace;
+    font-size:0.72rem;
+    background:none;
+    border:none;
+    border-bottom:2px solid transparent;
+    color:var(--ink-dim);
+    padding:9px 10px;
+    cursor:pointer;
+    white-space:nowrap;
+    box-shadow:none;
+    border-radius:0;
+  }
+  .model-tab:hover{color:var(--ink);}
+  .model-tab.active{
+    color:var(--red);
+    border-bottom-color:var(--red);
+    font-weight:700;
+  }
+  .model-tab:disabled{opacity:0.4;cursor:not-allowed;}
+  .model-tab .tab-note{
+    display:block;
+    font-size:0.6rem;
+    color:var(--ink-dim);
+    font-weight:400;
+    text-transform:none;
+  }
 
   #log{
     display:flex;
@@ -290,6 +326,7 @@
       <h2>order counter</h2>
       <span class="status" id="status">loading model&hellip;</span>
     </div>
+    <div class="model-tabs" id="modelTabs"></div>
     <div id="log"></div>
     <div class="order-pad">
       <div class="spice-row">
@@ -322,6 +359,13 @@
 <script src="model.js"></script>
 <script>
 (async function(){
+  // Each entry here becomes a tab. `file: null` means "not deployed yet" --
+  // shows as a disabled tab with the note, rather than pretending it exists.
+  const MODELS = [
+    { id: '250k', label: '250K', note: 'balanced', file: 'model_data.json' },
+    { id: '10m', label: '10M', note: 'training...', file: null },
+  ];
+
   const statusEl = document.getElementById('status');
   const logEl = document.getElementById('log');
   const form = document.getElementById('form');
@@ -330,6 +374,7 @@
   const tempSlider = document.getElementById('temp');
   const tempVal = document.getElementById('tempVal');
   const specParams = document.getElementById('specParams');
+  const tabsEl = document.getElementById('modelTabs');
 
   tempSlider.addEventListener('input', () => {
     tempVal.textContent = parseFloat(tempSlider.value).toFixed(2);
@@ -401,12 +446,51 @@
     exampleBubble = addMessage('ai', '(example reply -- generated fresh below once loaded)');
   }
 
-  async function loadModel(){
+  const modelCache = {};
+  let currentModelId = null;
+
+  function renderTabs(){
+    tabsEl.innerHTML = '';
+    for (const m of MODELS){
+      const btn = document.createElement('button');
+      btn.className = 'model-tab' + (m.id === currentModelId ? ' active' : '');
+      btn.disabled = !m.file;
+      btn.innerHTML = m.label + (m.note ? `<span class="tab-note">${m.note}</span>` : '');
+      btn.title = m.file ? `switch to the ${m.label} model` : `${m.label} isn't deployed yet (${m.note})`;
+      btn.addEventListener('click', () => { if (m.file) selectModel(m.id); });
+      tabsEl.appendChild(btn);
+    }
+  }
+
+  async function selectModel(id){
+    const cfg = MODELS.find(m => m.id === id);
+    if (!cfg || !cfg.file) return;
+    currentModelId = id;
+    renderTabs();
+
+    if (modelCache[id]){
+      model = modelCache[id];
+      specParams.textContent = model.param_count_display;
+      statusEl.textContent = 'ready';
+      statusEl.classList.remove('error');
+      input.disabled = false;
+      sendBtn.disabled = false;
+      return;
+    }
+
+    statusEl.textContent = `loading ${cfg.label} model...`;
+    statusEl.classList.remove('error');
+    input.disabled = true;
+    sendBtn.disabled = true;
     try{
-      const res = await fetch('model_data.json');
+      const res = await fetch(cfg.file);
       const data = await res.json();
-      model = new LaFries(data);
-      specParams.textContent = (data.V*data.E + 3*(data.E*data.H + data.H*data.H + data.H) + data.H*data.V + data.V).toLocaleString();
+      const built = new LaFries(data);
+      built.param_count_display = (data.V*data.E + 3*(data.E*data.H + data.H*data.H + data.H) + data.H*data.V + data.V).toLocaleString();
+      modelCache[id] = built;
+      if (currentModelId !== id) return;  // switched away while this was loading
+      model = built;
+      specParams.textContent = built.param_count_display;
       statusEl.textContent = 'ready';
       input.disabled = false;
       sendBtn.disabled = false;
@@ -419,9 +503,11 @@
           exampleBubble.textContent = acc;
           if (step.done) break;
         }
+        exampleBubble = null;
       }
     }catch(err){
-      statusEl.textContent = 'failed to load model';
+      statusEl.textContent = `failed to load ${cfg.label} model`;
+      statusEl.classList.add('error');
       console.error(err);
     }
   }
@@ -488,7 +574,9 @@
     addMessage('ai', '(conversation cleared -- ask me anything)');
   });
 
-  loadModel();
+  renderTabs();
+  const firstAvailable = MODELS.find(m => m.file);
+  if (firstAvailable) selectModel(firstAvailable.id);
 
   // Offline / installable support (Chrome OS "Install app").
   if ("serviceWorker" in navigator) {
