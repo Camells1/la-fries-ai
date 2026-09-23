@@ -1,4 +1,4 @@
-<title>LA FRIES A.I.</title>
+<title>La Peace AI</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -6,7 +6,7 @@
 <!-- iOS home-screen install: Safari ignores the web manifest for this, needs its own meta tags -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="LA FRIES A.I.">
+<meta name="apple-mobile-web-app-title" content="La Peace AI">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Libre+Franklin:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -311,7 +311,7 @@
 
 <main>
   <div class="signage">
-    <h1>LA FRIES A.I.</h1>
+    <h1>La Peace AI</h1>
     <div class="sub">small batch &middot; hand-built &middot; self-trained</div>
     <div class="spec-strip">
       <div><div class="num" id="specParams">&mdash;</div><div class="label">Parameters</div></div>
@@ -332,7 +332,7 @@
 
   <div class="board">
     <div class="board-head">
-      <h2>order counter</h2>
+      <h2>chat</h2>
       <span class="status" id="status">loading model&hellip;</span>
     </div>
     <div class="model-tabs" id="modelTabs"></div>
@@ -345,12 +345,13 @@
         <span class="spice-val" id="tempVal">0.70</span>
       </div>
       <form id="form">
-        <input type="text" id="input" placeholder="Write a short story about&hellip;" autocomplete="off" disabled>
-        <button type="submit" id="send" disabled>Order</button>
+        <input type="text" id="input" placeholder="Say something&hellip;" autocomplete="off" disabled>
+        <button type="submit" id="send" disabled>Send</button>
       </form>
       <div class="quick-row">
+        <button type="button" class="chip" data-q="Hello">say hello</button>
         <button type="button" class="chip" data-q="What is your name?">what is your name</button>
-        <button type="button" class="chip" data-q="Write a short story about the ocean.">a story about the ocean</button>
+        <button type="button" class="chip" data-q="Write a short story about the ocean.">story about the ocean</button>
         <button type="button" class="chip" data-q="Write a short essay about patience.">an essay about patience</button>
         <button type="button" class="chip" id="resetChip">clear conversation</button>
       </div>
@@ -396,7 +397,7 @@
     wrap.className = 'msg ' + role;
     const tag = document.createElement('span');
     tag.className = 'tag';
-    tag.textContent = role === 'user' ? 'you' : 'LA FRIES A.I.';
+    tag.textContent = role === 'user' ? 'you' : 'La Peace AI';
     const bubble = document.createElement('div');
     bubble.className = 'bubble';
     bubble.textContent = text;

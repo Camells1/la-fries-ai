@@ -1,4 +1,4 @@
-// LA FRIES A.I. - client-side inference engine.
+// La Peace AI - client-side inference engine.
 // A plain-JS port of the trained GRU's forward pass (model/gru.py's
 // step_generate). No server, no API calls - this runs entirely in the
 // browser using binary weight shards described by a small JSON manifest.
@@ -102,6 +102,11 @@ function routePrompt(prompt, knownWords) {
   }
 
   return { action: "generate", text: null };
+}
+
+// The trained weights have the old name baked in; show the new one.
+function fixName(text) {
+  return text.replace(/LA FRIES A\.I\.?/gi, "La Peace AI");
 }
 
 class LaFries {
@@ -219,12 +224,12 @@ class LaFries {
       const ch = this.itos[String(nextId)];
       tail += ch;
       if (tail.endsWith(end)) {
-        yield { ch: null, done: true, text: tail.slice(0, -end.length) };
+        yield { ch: null, done: true, text: fixName(tail.slice(0, -end.length)) };
         return;
       }
-      yield { ch, done: false, text: tail };
+      yield { ch, done: false, text: fixName(tail) };
       lastId = nextId;
     }
-    yield { ch: null, done: true, text: tail };
+    yield { ch: null, done: true, text: fixName(tail) };
   }
 }

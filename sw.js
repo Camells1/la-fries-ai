@@ -1,6 +1,6 @@
-// LA FRIES A.I. - service worker for offline / installable use on Chrome OS.
+// La Peace AI - service worker for offline / installable use on Chrome OS.
 // Bump CACHE_NAME on any real content change so old caches get cleared.
-const CACHE_NAME = "la-fries-ai-v4";
+const CACHE_NAME = "la-fries-ai-v5";
 const CORE_ASSETS = [
   "./",
   "./index.html",

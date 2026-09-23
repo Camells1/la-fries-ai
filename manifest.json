@@ -1,6 +1,6 @@
 {
-  "name": "LA FRIES A.I.",
-  "short_name": "LA FRIES A.I.",
+  "name": "La Peace AI",
+  "short_name": "La Peace AI",
   "description": "A hand-built, self-trained language model that runs entirely in your browser.",
   "start_url": "./index.html",
   "scope": "./",
